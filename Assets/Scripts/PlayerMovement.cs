@@ -11,6 +11,7 @@ using UnityEngine.XR;
 public class PlayerMovement : MonoBehaviour
 {
     public Rigidbody2D rb;
+    
     [Header("Movement")]
     public float moveSpeed = 5f;
     private float horizontalMovement = 0f;
@@ -33,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask deathLayer;
     public bool isInDeathBarrier = false;
     public int deathCount = 0;
+    public bool IsDead = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -46,9 +48,7 @@ public class PlayerMovement : MonoBehaviour
         Vector2 newVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
         rb.linearVelocity = newVelocity;
         isGrounded = IsGrounded();
-        isInDeathBarrier = IsDeathBarrier();
         Gravity();
-        isDead();
     }
 
     public void Gravity()
@@ -80,17 +80,6 @@ public class PlayerMovement : MonoBehaviour
 
         return false;
     }
-    private bool IsDeathBarrier()
-    {
-        Vector2 checkPos = new Vector2(groundCheckPos.position.x, groundCheckPos.position.y);
-
-        if (Physics2D.OverlapBox(checkPos, groundCheckSize, 0f, deathLayer))
-        {
-            return true;
-        }
-
-        return false;
-    }
 
     public void Die() // Die and add one to deathcount, Sets you back to 0,0 , Though this can be updated to "Checkpoint"
     {
@@ -106,7 +95,7 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpPower);
         }
-        if (context.canceled && isGrounded)
+        if (context.canceled)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocityX, Convert.ToInt32(rb.linearVelocityY * 0.5));
         }
@@ -118,17 +107,16 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.DrawWireCube(groundCheckPos.position, groundCheckSize);
     }
 
-    private void isDead()
-    {
-        if (isInDeathBarrier)
-        {
-            Die();
-        }
-    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         Trap trap = collision.GetComponent<Trap>();
         if (trap)
+        {
+            Die();
+        }
+        DeathBarrier deathBarrier = collision.GetComponent<DeathBarrier>();
+        if (deathBarrier)
         {
             Die();
         }
